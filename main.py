@@ -5,9 +5,8 @@ import random
 from typing import Optional, Callable
 
 from engine.state import GameState
-
-# Optional: If you already have Person2's AI wrapper later, import it here.
-# from ai.search import choose_best_action
+from ai.search import choose_best_action, get_session_stats, reset_session_stats
+from ai.heuristics import combined_evaluator
 
 
 KEYMAP = {
@@ -71,15 +70,8 @@ def run_manual(state: GameState, rng: random.Random) -> GameState:
     return state
 
 
-def default_ai_policy(state: GameState) -> Optional[str]:
-    """
-    Placeholder AI policy so main.py runs even before Person2 code exists.
-    - picks the first valid action (not smart).
-    Replace this with:
-        choose_best_action(state, depth=3, evaluator=...)
-    """
-    actions = state.get_actions()
-    return actions[0] if actions else None
+# ---------- AI depth setting ----------
+AI_DEPTH = 3  # plies of player-move look-ahead (2-4 recommended)
 
 
 def run_ai(
@@ -125,24 +117,33 @@ def main():
     print()
 
     if mode.startswith("a"):
-        # Later swap default_ai_policy -> Person2 choose_best_action wrapper
-        # e.g.:
-        # evaluator = ...
-        # choose_action = lambda s: choose_best_action(s, depth=3, evaluator=evaluator)
-        choose_action = default_ai_policy
+        reset_session_stats()
+        choose_action = lambda s: choose_best_action(
+            s, depth=AI_DEPTH, evaluator=combined_evaluator, verbose=True
+        )
         state = run_ai(state, rng=rng, choose_action_fn=choose_action)
     else:
         state = run_manual(state, rng=rng)
 
-    # End screen (exact 3 lines)
+    # End screen
     if state.is_terminal():
         print("Game Over")
     else:
-        # If user quit manual mode, still show summary (optional)
         print("Game Over")
 
     print(f"Final score: {state.score}")
     print(f"Max tile: {max_tile(state)}")
+
+    # Print AI session stats if an AI game was played
+    if mode.startswith("a"):
+        stats = get_session_stats()
+        print()
+        print("--- AI Session Stats ---")
+        print(f"  Total moves      : {stats['total_moves']}")
+        print(f"  Total nodes      : {stats['total_nodes']:,}")
+        print(f"  Total time       : {stats['total_time_s']}s")
+        print(f"  Avg nodes/move   : {stats['avg_nodes_per_move']:,.1f}")
+        print(f"  Avg time/move    : {stats['avg_time_per_move_s']}s")
 
 
 if __name__ == "__main__":
