@@ -12,8 +12,7 @@ Usage
 The function returns the best action string ("up", "down", "left", "right")
 or None when the game is over.
 
-It also prints lightweight per-move stats (nodes, time) to stdout so that
-Person 4 can capture benchmark data.
+It also prints lightweight per-move stats (nodes, time) to stdout for easy analysis of benchmark data
 """
 
 from __future__ import annotations
