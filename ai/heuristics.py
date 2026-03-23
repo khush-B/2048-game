@@ -103,14 +103,16 @@ def corner_bonus(state: GameState) -> float:
     Uses a snake-shaped weight matrix that strongly favours
     top-left corner strategy.
     """
-    # Weight matrix — largest weights in top-left corner, decreasing in
-    # a snake pattern.  Values are powers of 4 to match tile magnitudes.
+    # Weight matrix — largest weights in top-right corner, decreasing in
+    # a snake pattern.
+
     weights = (
-        (65536, 32768, 16384, 8192),
-        (  512,  1024,  2048, 4096),
-        (  256,   128,    64,   32),
-        (    1,     2,     4,   16),
+        (4000, 6000, 8000, 10000),
+        (1000, 800, 600, 400),
+        (50, 100, 200, 300),
+        (20, 15, 10, 0)
     )
+  
     total = 0.0
     for r in range(SIZE):
         for c in range(SIZE):
@@ -138,14 +140,13 @@ def merge_potential(state: GameState) -> float:
 # ---------------------------------------------------------------------------
 
 # Weights — Person 3 should tune these via experiments.
-_W_EMPTY       = 270.0
-_W_MAX_TILE    = 0.0     # already captured by corner bonus
-_W_MONOTONIC   = 47.0
-_W_SMOOTH      = 10.0
-_W_CORNER      = 1.0
-_W_MERGE       = 700.0
-_W_SCORE       = 1.0
-
+_W_EMPTY       =100 #100  #270.0 (empty: returns 0-16): more empty = good
+_W_MAX_TILE    =100 #50  #0.0     (returns: 0-11, 0=tile2, 11=tile2048)
+_W_MONOTONIC   = 0#200 #47.0 (returns: -40 to 0, where minus for messy boards)
+_W_SMOOTH      = 0#200 #10.0 (returns: -69 to 0)
+_W_CORNER      = 100 #1000 #Highest priority: highest tile in corner (1-16) => in start it is not important, but when high value tiles it is important!
+_W_MERGE       = 0#40 #700.0 (returns: 0-8)
+_W_SCORE       =0# 1000/10000 # this value increase fast! (returns: 0-50 000), 50 000 = goal???
 
 def combined_evaluator(state: GameState) -> float:
     """
@@ -162,3 +163,4 @@ def combined_evaluator(state: GameState) -> float:
         + _W_MERGE     * merge_potential(state)
         + _W_SCORE     * state.score
     )
+
