@@ -1,5 +1,5 @@
 # compare_algorithms.py
-"""Run all four AI strategies and print a comparison table."""
+"""Run all AI strategies and print a comparison table."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from ai.expectimax import expectimax_decision
 from ai.minimax import minimax_decision
 from ai.greedy import greedy_decision
 from ai.random_play import random_decision
+from ai.mcts import mcts_decision
 
 
 def _play_game(
@@ -50,6 +51,7 @@ def main():
     strategies = {
         "Random": lambda s: random_decision(s, rng=random.Random()),
         "Greedy": lambda s: greedy_decision(s, combined_evaluator)[0],
+        "MCTS (500 iter)": lambda s: mcts_decision(s, iterations=500),
         "Minimax (d=2)": lambda s: minimax_decision(s, 2, combined_evaluator)[0],
         "Expectimax (d=2)": lambda s: expectimax_decision(s, 2, combined_evaluator)[0],
     }
