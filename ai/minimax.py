@@ -1,10 +1,10 @@
-# ai/expectimax.py
-"""Depth-limited Expectimax search for 2048."""
+# ai/minimax.py
+"""Minimax search (adversarial) for 2048 — comparison baseline."""
 
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 from engine.state import GameState
 from engine.mechanics import move as engine_move
@@ -13,17 +13,11 @@ EvalFn = Callable[[GameState], float]
 _CacheKey = Tuple[Tuple[Tuple[int, ...], ...], int, str]
 
 _nodes_expanded: int = 0
-_PROB_2 = 0.9
-_PROB_4 = 0.1
 
 
 def _reset_stats() -> None:
     global _nodes_expanded
     _nodes_expanded = 0
-
-
-def get_nodes_expanded() -> int:
-    return _nodes_expanded
 
 
 def _max_node(
@@ -42,16 +36,15 @@ def _max_node(
     if key in cache:
         return cache[key]
 
-    _nodes_expanded += 1
-
     best = -math.inf
     for action in state.get_actions():
         moved_state, changed = engine_move(state, action)
         if not changed:
             continue
-        child_val = _chance_node(moved_state, depth, evaluator, cache)
-        if child_val > best:
-            best = child_val
+        val = _min_node(moved_state, depth, evaluator, cache)
+        if val > best:
+            best = val
+        _nodes_expanded += 1
 
     if best == -math.inf:
         best = evaluator(state)
@@ -60,70 +53,62 @@ def _max_node(
     return best
 
 
-def _chance_node(
+def _min_node(
     state: GameState,
     depth: int,
     evaluator: EvalFn,
     cache: Dict[_CacheKey, float],
 ) -> float:
+    """Adversary places worst-case tile in an empty cell."""
     global _nodes_expanded
 
     if state.is_terminal():
         _nodes_expanded += 1
         return evaluator(state)
 
-    key: _CacheKey = (state.board, depth, "chance")
+    key: _CacheKey = (state.board, depth, "min")
     if key in cache:
         return cache[key]
 
-    _nodes_expanded += 1
-
     empty_cells = state.get_empty_cells()
-    n = len(empty_cells)
-
-    if n == 0:
+    if not empty_cells:
         val = _max_node(state, depth - 1, evaluator, cache)
         cache[key] = val
         return val
 
-    expected = 0.0
-    cell_prob = 1.0 / n
-
+    worst = math.inf
     for cell in empty_cells:
-        s2 = state.spawn_tile(cell, 2)
-        val2 = _max_node(s2, depth - 1, evaluator, cache)
+        for value in (2, 4):
+            child = state.spawn_tile(cell, value)
+            val = _max_node(child, depth - 1, evaluator, cache)
+            if val < worst:
+                worst = val
+            _nodes_expanded += 1
 
-        s4 = state.spawn_tile(cell, 4)
-        val4 = _max_node(s4, depth - 1, evaluator, cache)
-
-        expected += cell_prob * (_PROB_2 * val2 + _PROB_4 * val4)
-
-    cache[key] = expected
-    return expected
+    cache[key] = worst
+    return worst
 
 
-def expectimax_decision(
+def minimax_decision(
     state: GameState,
     depth: int,
     evaluator: EvalFn,
-) -> Tuple[str | None, float, int]:
+) -> Tuple[Optional[str], float, int]:
+    global _nodes_expanded
     _reset_stats()
     cache: Dict[_CacheKey, float] = {}
 
-    best_action: str | None = None
+    best_action: Optional[str] = None
     best_value = -math.inf
 
-    actions = state.get_actions()
-    if not actions:
-        return None, evaluator(state), get_nodes_expanded()
-
-    for action in actions:
+    for action in state.get_actions():
         moved_state, changed = engine_move(state, action)
         if not changed:
             continue
-        value = _chance_node(moved_state, depth, evaluator, cache)
-        if value > best_value:
-            best_value = value
+        val = _min_node(moved_state, depth, evaluator, cache)
+        _nodes_expanded += 1
+        if val > best_value:
+            best_value = val
             best_action = action
 
-    return best_action, best_value, get_nodes_expanded()
+    return best_action, best_value, _nodes_expanded

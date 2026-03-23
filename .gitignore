@@ -23,7 +23,3 @@ env/
 Thumbs.db
 Desktop.ini
 .DS_Store
-
-# Test / benchmark scripts
-smoke_test.py
-bench_depth3.py

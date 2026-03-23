@@ -25,16 +25,8 @@ ACTION_TO_PRINT = {
 
 
 def format_board(state: GameState) -> str:
-    """
-    Produce exactly:
-    Score: X
-
-    a  b  c  d
-    ...
-    """
     lines = [f"Score: {state.score}", ""]
     for r in range(4):
-        # two spaces between numbers, matching your example
         lines.append("  ".join(str(state.board[r][c]) for c in range(4)))
     return "\n".join(lines)
 
@@ -65,13 +57,12 @@ def run_manual(state: GameState, rng: random.Random) -> GameState:
             continue
 
         state = state.apply_action(action, rng=rng)
-        print()  # spacing
+        print()
 
     return state
 
 
-# ---------- AI depth setting ----------
-AI_DEPTH = 3  # plies of player-move look-ahead (2-4 recommended)
+AI_DEPTH = 3
 
 
 def run_ai(
@@ -94,11 +85,9 @@ def run_ai(
         if action is None:
             break
 
-        # Print exactly like requested:
         print(f"AI chooses: {ACTION_TO_PRINT.get(action, action.upper())}")
         print()
 
-        # Safety: if AI returns invalid move, stop to avoid infinite loop
         if action not in state.get_actions():
             print("AI returned invalid move. Stopping.\n")
             break
@@ -110,7 +99,7 @@ def run_ai(
 
 
 def main():
-    rng = random.Random()  # set seed for reproducibility: random.Random(42)
+    rng = random.Random()
     state = GameState.new(seed_tiles=2, rng=rng)
 
     mode = input("Choose mode: (m)anual or (a)i? ").strip().lower()
@@ -125,7 +114,6 @@ def main():
     else:
         state = run_manual(state, rng=rng)
 
-    # End screen
     if state.is_terminal():
         print("Game Over")
     else:
@@ -134,7 +122,6 @@ def main():
     print(f"Final score: {state.score}")
     print(f"Max tile: {max_tile(state)}")
 
-    # Print AI session stats if an AI game was played
     if mode.startswith("a"):
         stats = get_session_stats()
         print()
